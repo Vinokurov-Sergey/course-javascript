@@ -11,6 +11,9 @@
    createDivWithText('loftschool') // создаст элемент div, поместит в него 'loftschool' и вернет созданный элемент
  */
 function createDivWithText(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div;
 }
 
 /*
@@ -22,6 +25,7 @@ function createDivWithText(text) {
    prepend(document.querySelector('#one'), document.querySelector('#two')) // добавит элемент переданный первым аргументом в начало элемента переданного вторым аргументом
  */
 function prepend(what, where) {
+  where.prepend(what);
 }
 
 /*
@@ -44,6 +48,13 @@ function prepend(what, where) {
    findAllPSiblings(document.body) // функция должна вернуть массив с элементами div и span т.к. следующим соседом этих элементов является элемент с тегом P
  */
 function findAllPSiblings(where) {
+  let result = [];
+  for (const child of where.children) {
+    if (child.nextElementSibling && child.nextElementSibling.nodeName === 'P') {
+      result.push(child);
+    }
+  }
+  return result;
 }
 
 /*
@@ -66,7 +77,7 @@ function findAllPSiblings(where) {
 function findError(where) {
   const result = [];
 
-  for (const child of where.childNodes) {
+  for (const child of where.children) {
     result.push(child.textContent);
   }
 
@@ -86,6 +97,11 @@ function findError(where) {
    должно быть преобразовано в <div></div><p></p>
  */
 function deleteTextNodes(where) {
+  for (const child of where.childNodes) {
+    if (child.nodeType === 3) {
+      where.removeChild(child);
+    }
+  }
 }
 
 /*
@@ -109,6 +125,62 @@ function deleteTextNodes(where) {
    }
  */
 function collectDOMStat(root) {
+  const result = {
+    tags: {},
+    classes: {},
+    texts: 0
+  };
+
+  function textsCount (root) {  
+    for (const child of root.childNodes) {
+      if (child.nodeType == 3) {
+        result.texts++;
+      }
+      textsCount(child);
+    }
+  }
+
+  function classCount (root) {
+    for (const child of root.children) {
+      let hasClass = false;
+      let countChildClass = child.classList.length;
+      while (countChildClass >=1) {
+        for (const key in result.classes) {
+          if (child.classList[countChildClass-1] == key) {
+            hasClass = true;
+            result.classes[child.classList[countChildClass-1]]++;
+          }
+        }
+        if (hasClass == false) {
+          result.classes[child.classList[countChildClass-1]] = 1;
+        }
+        countChildClass--;
+      }
+      classCount(child);
+    }
+  }
+  
+  function tagsCount (root) {
+    for (const child of root.children) {
+      let hasTag = false;
+      for (const key in result.tags) {
+        if (child.nodeName == key) {
+          hasTag = true;
+          result.tags[child.nodeName]++;
+        }
+      } 
+      if (hasTag == false) {
+        result.tags[child.nodeName] = 1;
+      }
+      tagsCount(child);
+    }
+  }
+  
+  tagsCount(root);
+  classCount(root);
+  textsCount(root);
+
+  return result;
 }
 
 export {
