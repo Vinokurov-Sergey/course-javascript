@@ -2,10 +2,11 @@
 
 // eslint-disable-next-line no-unused-vars
 
+const userID = 51763971;
 let friends;
 
 VK.init({
-  apiId: 51763971
+  apiId: userID
 });
 
 export default {
@@ -19,24 +20,26 @@ export default {
     return array[index];
   },
 
-  async getNextPhoto() {
-    const friend = this.getRandomElement(friends.items);
-    const photos = await this.getFriendPhotos(friend.id);
-    const photo = this.getRandomElement(photos.items);
-
+  getPhotoSize(photo) {
+    let maxSize = 0;
     let photoSize;
-
-    (() => {
-      let maxSize = 0;
       for (let size of photo.sizes) {
         if (size.width >= 360 && size.width > maxSize) {
           maxSize = size.width;
           photoSize = size;
         }
       }
-    })();
+      return photoSize;
+  },
 
-      return {friend, id: photo.id, url: photoSize.url};
+  async getNextPhoto() {
+    const friend = this.getRandomElement(friends.items);
+    const photos = await this.getFriendPhotos(friend.id);
+    const photo = this.getRandomElement(photos.items);
+
+    let photoSize = this.getPhotoSize(photo);
+
+    return {friend, id: photo.id, url: photoSize.url};
 
   },
 
@@ -52,6 +55,8 @@ export default {
     });
   },
 
+  user: {},
+
   async init() {
     this.photoCache = {};
 
@@ -66,7 +71,8 @@ export default {
         });
       });
     }
-
+    
+    this.user = await this.getUsers(userID);
     friends = await getfriends();
   },
 
@@ -96,4 +102,28 @@ export default {
 
   return photos;
 },
+
+logout() {
+  return new Promise ((resolve) => {
+    VK.Auth.revokeGrants(resolve);
+  });
+},
+
+getFriends() {},
+
+async getUsers(ids) {
+    const users = (ids) => {
+    return new Promise((resolve, reject) => {
+      VK.api('users.get',{v: '5.154', ids, fields: 'photo_100'}, (data) => {
+        if(data.Error) {
+          reject(data.Error);
+        } else {
+          resolve(data.response);
+        }
+      });
+    });
+  }
+  return await users(ids);
+},
+
 };
