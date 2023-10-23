@@ -21,6 +21,7 @@ export default {
       const photoSize = model.getPhotoSize(photo);
       const divPhoto = document.createElement('div');
       divPhoto.classList.add('component-user-photo');
+      divPhoto.dataset.id = photo.id;
       divPhoto.style.backgroundImage = `url(${photoSize.url})`;
       container.append(divPhoto);
     }
@@ -33,7 +34,8 @@ export default {
 
     container.addEventListener('click', async (e) => {
       if (e.target.classList.contains('component-user-photo')) {
-        mainPage.setFriendAndPhoto(this.user, 0, e.target.style.backgroundImage.slice(5, -1));
+        const stats = await model.photoStats(e.target.dataset.id);
+        mainPage.setFriendAndPhoto(this.user, e.target.dataset.id, e.target.style.backgroundImage.slice(5, -1), stats);
         pages.openPage('main');
       }
     });

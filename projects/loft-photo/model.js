@@ -43,10 +43,13 @@ export default {
 
   },
 
+  token: {},
+
   login() {
     return new Promise ((resolve, reject) => {
       VK.Auth.login(data => {
         if (data.session) {
+          this.token = data.session.sid;
           resolve();
         } else {
           reject(new Error('Не удалось авторизоваться'));
@@ -125,5 +128,44 @@ async getUsers(ids) {
   }
   return await users(ids);
 },
+
+async callserver(method, queryParams, body) {
+  queryParams = {method, ...queryParams};
+  const query = Object.entries(queryParams)
+    .reduce((all, [name,value]) => {
+      all.push(`${name}=${encodeURIComponent(value)}`);
+      return all;
+    }, [])
+    .join('&');
+    const params = {
+      headers: {
+        vk_token: this.token,
+      },
+    };
+    if (body) {
+      params.method = 'POST';
+      params.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`/loft-photo/api/?${query}`, params);
+    return response.json();
+},
+
+async like(photo) {
+  return this.callserver('like', {photo});
+},
+
+async photoStats(photo) {
+  return this.callserver('photoStats', {photo});
+},
+
+async getComments(photo) {
+  return this.callserver('getComments', {photo});
+},
+
+async postComment(photo, text) {
+  return this.callserver('postComment', {photo}, {text});
+},
+
 
 };
